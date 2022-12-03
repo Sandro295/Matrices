@@ -31,6 +31,19 @@ public:
         return matrix_[row][col];
     }
 
+    double& operator()(int index) {
+        int row = index / Rows();
+        int col = index % Columns();
+        return matrix_[row][col];
+    }
+
+    const double& operator()(int index) const {
+        int row = index / Rows();
+        int col = index % Columns();
+        return matrix_[row][col];
+    }
+
+
     Matrix& operator*=(const Matrix& mtx) {
         *this* mtx;
         return *this;

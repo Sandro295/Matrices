@@ -20,6 +20,58 @@ Matrix multiplyViaTensor(Matrix& a, Matrix& b, Tensor& tensor3d) {
 }
 
 
+bool EqualMatricies(const Matrix& a, const Matrix& b) {
+    if (a.Rows() != b.Rows()) {
+        return false;
+    }
+    if (a.Columns() != b.Columns()) {
+        return false;
+    }
+    for (auto i = 0ul; i < a.Rows(); ++i) {
+        for (auto j = 0ul; j < a.Columns(); ++j) {
+            if (a(i, j) != b(i, j)) { // double could have some rounding error
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+// [[[1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1]],
+// [[1, 0, 0, 0], [0, 1, 0, -1], [0, 0, 1, 1]],
+// [[0, 1, 0, -1], [0, 0, 1, 1], [1, 0, 0, 0]],
+// [[0, 0, 1, 1], [1, 0, 0, 0], [0, 1, 0, -1]],
+// [[0, 0, 0, 1], [-1, 0, 1, 0], [1, 1, 0, 0]],
+// [[-1, 0, 1, 0], [1, 1, 0, 0], [0, 0, 0, 1]],
+// [[1, 1, 0, 0], [0, 0, 0, 1], [-1, 0, 1, 0]]]
+
+// using std::vector<std::vector<int>> = matrix;
+
+static const Matrix u ( \
+{
+    {1, 0, 1, 0, 1, -1, 0},
+    {0, 0, 0, 0, 1, 0, 1},
+    {0, 1, 0, 0, 0, 1, 0},
+    {1, 1, 0, 1, 0, 0, -1}
+});
+
+static const Matrix v( \
+{
+    {1, 1, 0, -1, 0, 1, 0},
+    {0, 0, 1, 0, 0, 1, 0},
+    {0, 0, 0, 1, 0, 0, 1},
+    {1, 0, -1, 0, 1, 0, 1}
+});
+
+static const Matrix w( \
+{
+    {1, 0, 0, 1, -1, 0, 1},
+    {0, 0, 1, 0, 1, 0, 0},
+    {0, 1, 0, 1, 0, 0, 0},
+    {1, -1, 1, 0, 0, 1, 0}
+});
+
+
 // u, v, w must have the same size
 
 // indexing is (row, column)
@@ -31,28 +83,20 @@ Matrix multiplyDecomposed(const Matrix& a, const Matrix& b, const Matrix& u, con
         int a_sum = 0;
         int b_sum = 0;
         for (int j = 0; j < u.Rows(); ++j) {
-            a_sum += a(j, i) * u(j, i);
-            b_sum += b(j, i) * v(j, i);
+            a_sum += a(j) * u(j, i);
+            b_sum += b(j) * v(j, i);
         }
         m[i] = a_sum*b_sum;
     }
 
-    std::vector<int> c_elements(a.Rows() * b.Columns())
+    std::vector<int> c_elements(a.Rows() * b.Columns());
 
-    for (int i = 0; i < w.Columns(); ++i) {
+    for (int i = 0; i < w.Rows(); ++i) {
         int m_sum = 0;
-        for (int j = 0; j < w.Rows(); ++j) {
-            m_sum += m[j] * w(j, i);
+        for (int j = 0; j < w.Columns(); ++j) {
+            m_sum += m[j] * w(i, j);
         }
-        if (counter++ % a.Columns() != 0) {
-        }
-        c_elements[i] = m_sum;
-    }
-
-    for (int i = 0; i < a.Rows(); ++i) {
-        for (int j = 0; j < b.Columns(); ++j) {
-            c(j, i) = c_elements[b.Columns() * i + j];
-        }
+        c(i) = m_sum;
     }
 
     return c;
@@ -92,6 +136,12 @@ int main() {
 
     printMatrix(regularMult);
 
-    // Matrix alphatensored = multiplyDecomposed(a, b);
+    Matrix alphatensored = multiplyDecomposed(a, b, u, v, w);
+
+    printMatrix(alphatensored);
+
+    if (EqualMatricies(regularMult, alphatensored)) {
+        std::cout << "\nSuccess!!!\n";
+    }
 
 }
