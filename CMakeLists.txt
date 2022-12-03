@@ -11,4 +11,4 @@ set(CMAKE_CXX_FLAGS_ULTIMATE "-g -Wall -Wextra -pedantic -O2 -Wshadow -Wformat=2
         CACHE STRING "Compiler flags in ultimate debug build"
         FORCE)
 
-add_executable(matrix main.cpp matrix_util.cpp)
+add_executable(matrix src/main.cpp src/matrix_util.cpp)

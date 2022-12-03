@@ -8,9 +8,9 @@ using Tensor = std::vector<Matrix>;
 
 Matrix multiplyViaTensor(Matrix& a, Matrix& b, Tensor& tensor3d) {
     Matrix result(a.Rows(), b.Columns());
-    for (int m = 0; m < tensor3d.size(); ++m) {
-        for (int i = 0; i < tensor3d[0].Rows(); ++i) {
-            for (int j = 0; j < tensor3d[0].Columns(); ++j) {
+    for (size_t m = 0; m < tensor3d.size(); ++m) {
+        for (size_t i = 0; i < tensor3d[0].Rows(); ++i) {
+            for (size_t j = 0; j < tensor3d[0].Columns(); ++j) {
                 if (tensor3d[m](i, j)) {
                     result(i, j) = a(i, j) * b(i, j);
                 }
