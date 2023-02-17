@@ -2,6 +2,11 @@
 #include <random>
 #include <iostream>
 
+static std::random_device rd;
+static std::mt19937 generator{rd()};
+static constexpr int range = 10;
+static std::uniform_int_distribution<int> uid(-range, range);
+
 bool EqualMatricies(const Matrix& a, const Matrix& b) {
     if (a.Rows() != b.Rows()) {
         return false;
@@ -19,26 +24,28 @@ bool EqualMatricies(const Matrix& a, const Matrix& b) {
     return true;
 }
 
-void printMatrix(Matrix& a) {
-    for (size_t i = 0; i < a.Rows(); ++i) {
-        for (size_t j = 0; j < a.Columns(); ++j) {
-            std::cout << a(i, j) << "\t";
+void printMatrix(Matrix& matrix) {
+    for (size_t i = 0; i < matrix.Rows(); ++i) {
+        for (size_t j = 0; j < matrix.Columns(); ++j) {
+            std::cout << matrix(i, j) << "\t";
         }
         std::cout << "\n";
     }
     std::cout << "\n\n";
 }
 
-void fillMatrixRandomly(Matrix& a) {
-    static std::random_device rd;
-    static std::mt19937 generator{rd()};
-    static constexpr int range = 10;
-    static std::uniform_int_distribution<int> uid(-range, range);
-
-    for (size_t i = 0; i < a.Rows(); ++i) {
-        for (size_t j = 0; j < a.Columns(); ++j) {
-            a(i, j) = uid(generator);
+void fillMatrixRandomly(Matrix& matrix) {
+    for (size_t i = 0; i < matrix.Rows(); ++i) {
+        for (size_t j = 0; j < matrix.Columns(); ++j) {
+            matrix(i, j) = uid(generator);
         }
+    }
+}
+
+// contiguous fill
+void fillMatrixRandomly(double* matrix, int rows, int columns) {
+    for (size_t i = 0; i < (rows * columns); ++i) {
+        matrix[i] = static_cast<double>(uid(generator));
     }
 }
 
@@ -65,6 +72,5 @@ Matrix multiplyDecomposed(const Matrix& a, const Matrix& b, const Matrix& u, con
         }
         c(i) = m_sum;
     }
-
     return c;
 }
