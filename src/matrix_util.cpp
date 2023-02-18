@@ -26,12 +26,13 @@ bool EqualMatricies(const Matrix& a, const Matrix& b) {
 
 void printMatrix(Matrix& matrix) {
     for (size_t i = 0; i < matrix.Rows(); ++i) {
+        std::cout << "\t";
         for (size_t j = 0; j < matrix.Columns(); ++j) {
             std::cout << matrix(i, j) << "\t";
         }
         std::cout << "\n";
     }
-    std::cout << "\n\n";
+    std::cout << "\n";
 }
 
 void fillMatrixRandomly(Matrix& matrix) {

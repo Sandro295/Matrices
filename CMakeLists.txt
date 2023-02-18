@@ -11,10 +11,10 @@ set(CMAKE_CXX_FLAGS_ULTIMATE "-g -Wall -Wextra -pedantic -O2 -Wshadow -Wformat=2
 CACHE STRING "Compiler flags in ultimate debug build"
         FORCE)
         
-        find_package(MKL CONFIG REQUIRED)
+find_package(MKL CONFIG REQUIRED)
         
         
-        add_executable(matrix src/main.cpp src/matrix_util.cpp)
+add_executable(matrix src/main.cpp src/matrix_util.cpp src/mkl_util.cpp)
 # set(CMAKE_CXX_FLAGS -DMKL_ILP64  -m64  -I"${MKLROOT}/include")
 
 
