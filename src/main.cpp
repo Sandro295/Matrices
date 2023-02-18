@@ -76,10 +76,10 @@ void benchMKL(uint32_t times, int a_rows, int a_cols_b_rows, int b_cols) {
 }
 
 int main() {
-    constexpr uint32_t timesToRepeat = 1'0;
-    constexpr int a_rows = 139;
-    constexpr int a_cols_b_rows = 249;
-    constexpr int b_rows = 401;
-    benchMyMultiply(timesToRepeat, a_rows, a_cols_b_rows, b_rows);
+    constexpr uint32_t timesToRepeat = 1;
+    constexpr int a_rows = 1399;
+    constexpr int a_cols_b_rows = 2439;
+    constexpr int b_rows = 4101;
     benchMKL(timesToRepeat, a_rows, a_cols_b_rows, b_rows);
+    benchMyMultiply(timesToRepeat, a_rows, a_cols_b_rows, b_rows);
 }

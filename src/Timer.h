@@ -13,8 +13,9 @@ public:
 
     ~Timer() {
         auto end = std::chrono::high_resolution_clock::now();
-        std::cout << func_name_ << (func_name_!="" ? ": " : "") <<
-            (end - start_).count() << " ns elapsed\n";
+        auto duration = end - start_;
+        std::cout << func_name_ << (func_name_ != "" ? ": " : "") <<
+            duration.count() / 1'000'000. << " ms elapsed\n";
     }
 
 private:
