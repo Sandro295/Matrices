@@ -7,15 +7,20 @@ public:
     Timer() {
         start_ = std::chrono::high_resolution_clock::now();
     }
+
     Timer(const std::string& func_name) : func_name_(func_name) {
         start_ = std::chrono::high_resolution_clock::now();
     }
 
-    ~Timer() {
+    void PrintTime() {
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = end - start_;
         std::cout << func_name_ << (func_name_ != "" ? ": " : "") <<
             duration.count() / 1'000'000. << " ms elapsed\n";
+    }
+
+    ~Timer() {
+        PrintTime();
     }
 
 private:

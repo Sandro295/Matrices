@@ -31,7 +31,7 @@ Matrix multiplyViaTensor(Matrix& a, Matrix& b, Tensor& tensor3d) {
 
 // using std::vector<std::vector<int>> = matrix;
 
-static const Matrix u ( \
+static const Matrix u( \
 {
     {1, 0, 1, 0, 1, -1, 0},
     {0, 0, 0, 0, 1, 0, 1},
@@ -55,31 +55,57 @@ static const Matrix w( \
     {1, -1, 1, 0, 0, 1, 0}
 });
 
-void benchMyMultiply(uint32_t times, int a_rows, int a_cols_b_rows, int b_cols) {
+void benchMyMultiply(int times, int a_rows, int a_cols_b_rows, int b_cols) {
+    Timer t(__FUNCTION__);
+    // std::vector<Matrix> A_matrices{times};
+    // std::vector<Matrix> B_matrices{times};
+    // std::vector<Matrix> C_matrices{times};
+    // for (auto &matrix : A_matrices) {
+    //     fillMatrixRandomly(matrix);
+    // }
+    // for (auto &matrix : B_matrices) {
+    //     fillMatrixRandomly(matrix);
+    // }
+
+    // Timer t(__FUNCTION__);
+    // for (auto i = 0; i < C_matrices.size(); ++i) {
+    //     C_matrices[i] = A_matrices[i] * B_matrices[i];
+    // }
+
+    while(times--) {
+        Matrix a(a_rows, a_cols_b_rows);
+        Matrix b(a_cols_b_rows, b_cols);
+        fillMatrixRandomly(a);
+        fillMatrixRandomly(b);
+        Matrix regularMult = a * b;
+    }
+}
+
+void benchAlphaTensored(uint32_t times, int a_rows=2, int a_cols_b_rows=2, int b_cols=2) {
     Timer t(__FUNCTION__);
     while(times--) {
         Matrix a(a_rows, a_cols_b_rows);
         Matrix b(a_cols_b_rows, b_cols);
-
         fillMatrixRandomly(a);
         fillMatrixRandomly(b);
-
-        Matrix regularMult = a * b;
+        Matrix alphatensored = multiplyDecomposed(a, b, u, v, w);
     }
 }
 
 void benchMKL(uint32_t times, int a_rows, int a_cols_b_rows, int b_cols) {
     Timer t(__FUNCTION__);
     while(times--) {
-        IntelExample(a_rows, a_cols_b_rows, b_cols);
+        IntelCBLASExample(a_rows, a_cols_b_rows, b_cols);
     }
 }
 
 int main() {
-    constexpr uint32_t timesToRepeat = 1;
-    constexpr int a_rows = 1399;
-    constexpr int a_cols_b_rows = 2439;
-    constexpr int b_rows = 4101;
+    constexpr uint32_t timesToRepeat = 1'000;
+    constexpr int a_rows = 2;
+    constexpr int a_cols_b_rows = 2;
+    constexpr int b_rows = 2;
     benchMKL(timesToRepeat, a_rows, a_cols_b_rows, b_rows);
     benchMyMultiply(timesToRepeat, a_rows, a_cols_b_rows, b_rows);
+    benchAlphaTensored(timesToRepeat);
+    return 0;
 }

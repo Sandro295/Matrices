@@ -2,7 +2,7 @@
 
 #include "matrix.h"
 
-bool EqualMatricies(const Matrix& a, const Matrix& b);
+bool EqualMatrices(const Matrix& a, const Matrix& b);
 void printMatrix(Matrix& a);
 void fillMatrixRandomly(Matrix& a);
 void fillMatrixRandomly(double* matrix, int rows, int columns);

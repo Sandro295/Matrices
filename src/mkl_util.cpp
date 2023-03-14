@@ -5,7 +5,7 @@
 
 #define min(x,y) (((x) < (y)) ? (x) : (y))
 
-int IntelExample(int a_rows, int a_cols_b_rows, int b_cols) {
+int IntelCBLASExample(int a_rows, int a_cols_b_rows, int b_cols) {
     double *A, *B, *C;
     int i, j;
     double alpha, beta;

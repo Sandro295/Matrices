@@ -7,7 +7,7 @@ static std::mt19937 generator{rd()};
 static constexpr int range = 10;
 static std::uniform_int_distribution<int> uid(-range, range);
 
-bool EqualMatricies(const Matrix& a, const Matrix& b) {
+bool EqualMatrices(const Matrix& a, const Matrix& b) {
     if (a.Rows() != b.Rows()) {
         return false;
     }
