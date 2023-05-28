@@ -6,43 +6,47 @@
 
 class Matrix {
 public:
-    Matrix(int rows, int columns) {
-        matrix_.resize(rows, std::vector<double>(columns));
+    Matrix(size_t rows, size_t columns) : rows_{rows}, columns_{columns} {
+        matrix_.resize(rows_ * columns_);
     }
 
-    Matrix(int square) : Matrix(square, square) {
+    Matrix(size_t square) : Matrix(square, square) {
     }
 
     Matrix(const std::vector<std::vector<double>> matrix) {
-        matrix_.assign(matrix.begin(), matrix.end());
+        size_t index = 0;
+        rows_ = matrix.size();
+        columns_ = matrix[0].size();
+        matrix_.resize(rows_ * columns_);
+        for (auto& row : matrix) {
+            for (auto el : row) {
+                matrix_[index++] = el;
+            }
+        }
     }
 
     size_t Columns() const {
-        return matrix_[0].size();
+        return columns_;
     }
 
     size_t Rows() const {
-        return matrix_.size();
+        return rows_;
     }
 
-    double& operator()(int row, int col) {
-        return matrix_[row][col];
+    double& operator()(size_t row, size_t col) {
+        return matrix_[row * columns_ + col];
     }
 
-    const double& operator()(int row, int col) const {
-        return matrix_[row][col];
+    const double& operator()(size_t row, size_t col) const {
+        return matrix_[row * columns_ + col];
     }
 
-    double& operator()(int index) {
-        int row = index / Rows();
-        int col = index % Columns();
-        return matrix_[row][col];
+    double& operator()(size_t index) {
+        return matrix_[index];
     }
 
-    const double& operator()(int index) const {
-        int row = index / Rows();
-        int col = index % Columns();
-        return matrix_[row][col];
+    const double& operator()(size_t index) const {
+        return matrix_[index];
     }
 
 
@@ -54,7 +58,7 @@ public:
     Matrix& operator+=(const Matrix& mtx) {
         for (uint32_t i = 0; i < mtx.Rows(); ++i) {
             for (uint32_t j = 0; j < mtx.Columns(); ++j) {
-                matrix_[i][j] += mtx(i, j);
+                matrix_[i * columns_ + j] += mtx(i, j);
             }
         }
         return *this;
@@ -63,7 +67,7 @@ public:
     Matrix& operator-=(const Matrix& mtx) {
         for (uint32_t i = 0; i < mtx.Rows(); ++i) {
             for (uint32_t j = 0; j < mtx.Columns(); ++j) {
-                matrix_[i][j] -= mtx(i, j);
+                matrix_[i * columns_ + j] -= mtx(i, j);
             }
         }
         return *this;
@@ -81,10 +85,10 @@ public:
 
     Matrix operator*(const Matrix& mtx) const {
         Matrix new_mtx(Rows(), mtx.Columns());
-        for (uint32_t j = 0; j < new_mtx.Columns(); ++j) {
-            for (uint32_t i = 0; i < new_mtx.Rows(); ++i) {
+        for (uint32_t col = 0; col < new_mtx.Columns(); ++col) {
+            for (uint32_t row = 0; row < new_mtx.Rows(); ++row) {
                 for (uint32_t k = 0; k < Columns(); ++k) {
-                    new_mtx(i, j) += matrix_[i][k] * mtx(k, j);
+                    new_mtx(row, col) += matrix_[row * columns_ + k] * mtx(k, col);
                 }
             }
         }
@@ -92,5 +96,7 @@ public:
     }
 
 private:
-    std::vector<std::vector<double>> matrix_;
+    size_t rows_;
+    size_t columns_;
+    std::vector<double> matrix_;
 };
