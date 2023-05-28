@@ -95,6 +95,27 @@ public:
         return new_mtx;
     }
 
+    Matrix multiplyBlocked(const Matrix& mtx, size_t blockSize) const {
+        Matrix new_mtx(Rows(), mtx.Columns());
+        for (auto jj = 0ul; jj < Rows(); jj += blockSize) {
+            auto jjMin = std::min(jj + blockSize, Rows());
+            for (auto kk = 0u; kk < Columns(); kk += blockSize) {
+                auto kkMin = std::min(kk + blockSize, Columns());
+                for (auto i = 0u; i < Rows(); i++) {
+                    for (auto k = kk; k < kkMin; k++) {
+                        for (auto j = jj; j < jjMin; j++) {
+                            new_mtx(i, j) += matrix_[i * Columns() + k] * mtx(k, j);
+                        }
+                    }
+                }
+            }
+        }
+        return new_mtx;
+    }
+
+
+
+
 private:
     size_t rows_;
     size_t columns_;
