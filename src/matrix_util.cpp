@@ -1,11 +1,14 @@
 #include "matrix_util.h"
 #include <random>
 #include <iostream>
+#include "blis.h"
+// #include <blis.hh>
 
 static std::random_device rd;
 static std::mt19937 generator{rd()};
 static constexpr int range = 10;
 static std::uniform_int_distribution<int> uid(-range, range);
+static constexpr auto EPS = 1e-6;
 
 bool EqualMatrices(const Matrix& a, const Matrix& b) {
     if (a.Rows() != b.Rows()) {
@@ -14,9 +17,10 @@ bool EqualMatrices(const Matrix& a, const Matrix& b) {
     if (a.Columns() != b.Columns()) {
         return false;
     }
+
     for (auto i = 0ul; i < a.Rows(); ++i) {
         for (auto j = 0ul; j < a.Columns(); ++j) {
-            if (a(i, j) != b(i, j)) { // double could have some rounding error
+            if (a(i, j) - b(i, j) > EPS) {
                 return false;
             }
         }
@@ -24,11 +28,20 @@ bool EqualMatrices(const Matrix& a, const Matrix& b) {
     return true;
 }
 
+bool EqualMatrices(const double* A, const double* B, size_t length) {
+    for (size_t i = 0; i < length; ++i) {
+        if (A[i] != B[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void printMatrix(Matrix& matrix) {
-    for (size_t i = 0; i < matrix.Rows(); ++i) {
+    for (size_t row = 0; row < matrix.Rows(); ++row) {
         std::cout << "\t";
-        for (size_t j = 0; j < matrix.Columns(); ++j) {
-            std::cout << matrix(i, j) << "\t";
+        for (size_t col = 0; col < matrix.Columns(); ++col) {
+            std::cout << matrix(row, col) << "\t";
         }
         std::cout << "\n";
     }
@@ -36,19 +49,51 @@ void printMatrix(Matrix& matrix) {
 }
 
 void fillMatrixRandomly(Matrix& matrix) {
-    for (size_t i = 0; i < matrix.Rows(); ++i) {
-        for (size_t j = 0; j < matrix.Columns(); ++j) {
-            matrix(i, j) = uid(generator);
-        }
-    }
+    fillMatrixRandomly(matrix.Data(), matrix.Rows(), matrix.Columns());
 }
 
 // contiguous fill
-void fillMatrixRandomly(double* matrix, int rows, int columns) {
+void fillMatrixRandomly(double* matrix, size_t rows, size_t columns) {
     for (size_t i = 0; i < (rows * columns); ++i) {
         matrix[i] = static_cast<double>(uid(generator));
     }
 }
+
+Matrix multiplyBlocked(const Matrix& A, const Matrix& B, size_t blockSize) {
+    Matrix new_mtx(A.Rows(), B.Columns());
+    double alpha = 1;
+    double beta = 0;
+    double* c;
+    dim_t m, n, k;
+	inc_t rsa, csa;
+	inc_t rsb, csb;
+	inc_t rsc, csc;
+
+    m = 4; n = 5; k = 3;
+
+    for (auto jj = 0u; jj < A.Rows(); jj += blockSize) {
+        auto jjMin = std::min(jj + blockSize, A.Rows());
+        for (auto kk = 0u; kk < A.Columns(); kk += blockSize) {
+            auto kkMin = std::min(kk + blockSize, A.Columns());
+            for (auto i = 0u; i < A.Rows(); i++) {
+                for (auto k = kk; k < kkMin; k++) {
+                    	// c := beta * c + alpha * a * b, where 'a', 'b', and 'c' are general.
+                        // bli_dgemm( BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE,
+                        //         m, n, k, &alpha, a, rsa, csa, b, rsb, csb,
+                        //                     &beta, c, rsc, csc );
+
+                    // for (auto j = jj; j < jjMin; j++) {
+                    //     new_mtx(i, j) += A(i, k) * B(k, j);
+                    // }
+                }
+            }
+        }
+    }
+    return new_mtx;
+}
+
+
+
 
 // indexing is (row, column)
 // u, v, w must have the same size
@@ -56,22 +101,22 @@ Matrix multiplyDecomposed(const Matrix& a, const Matrix& b, const Matrix& u, con
     Matrix c(a.Rows(), b.Columns());
     std::vector<int> m(u.Columns());
 
-    for (size_t i = 0; i < u.Columns(); ++i) {
+    for (size_t col = 0; col < u.Columns(); ++col) {
         int a_sum = 0;
         int b_sum = 0;
-        for (size_t j = 0; j < u.Rows(); ++j) {
-            a_sum += a(j) * u(j, i);
-            b_sum += b(j) * v(j, i);
+        for (size_t row = 0; row < u.Rows(); ++row) {
+            a_sum += a(row) * u(row, col);
+            b_sum += b(row) * v(row, col);
         }
-        m[i] = a_sum*b_sum;
+        m[col] = a_sum*b_sum;
     }
 
-    for (size_t i = 0; i < w.Rows(); ++i) {
+    for (size_t row = 0; row < w.Rows(); ++row) {
         int m_sum = 0;
-        for (size_t j = 0; j < w.Columns(); ++j) {
-            m_sum += m[j] * w(i, j);
+        for (size_t col = 0; col < w.Columns(); ++col) {
+            m_sum += m[col] * w(row, col);
         }
-        c(i) = m_sum;
+        c(row) = m_sum;
     }
     return c;
 }

@@ -2,6 +2,7 @@
 #include "matrix_util.h"
 #include <iostream>
 #include "Timer.h"
+#include <mkl.h>
 
 #define min(x,y) (((x) < (y)) ? (x) : (y))
 

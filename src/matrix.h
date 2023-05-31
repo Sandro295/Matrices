@@ -6,6 +6,8 @@
 
 class Matrix {
 public:
+    Matrix() : rows_{0}, columns_{0} {
+    }
     Matrix(size_t rows, size_t columns) : rows_{rows}, columns_{columns} {
         matrix_.resize(rows_ * columns_);
     }
@@ -95,25 +97,13 @@ public:
         return new_mtx;
     }
 
-    Matrix multiplyBlocked(const Matrix& mtx, size_t blockSize) const {
-        Matrix new_mtx(Rows(), mtx.Columns());
-        for (auto jj = 0ul; jj < Rows(); jj += blockSize) {
-            auto jjMin = std::min(jj + blockSize, Rows());
-            for (auto kk = 0u; kk < Columns(); kk += blockSize) {
-                auto kkMin = std::min(kk + blockSize, Columns());
-                for (auto i = 0u; i < Rows(); i++) {
-                    for (auto k = kk; k < kkMin; k++) {
-                        for (auto j = jj; j < jjMin; j++) {
-                            new_mtx(i, j) += matrix_[i * Columns() + k] * mtx(k, j);
-                        }
-                    }
-                }
-            }
-        }
-        return new_mtx;
+    double* Data() {
+        return matrix_.data();
     }
 
-
+    double* Data(size_t index) {
+        return matrix_.data() + index;
+    }
 
 
 private:
