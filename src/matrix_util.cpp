@@ -61,30 +61,18 @@ void fillMatrixRandomly(double* matrix, size_t rows, size_t columns) {
 
 Matrix multiplyBlocked(const Matrix& A, const Matrix& B, size_t blockSize) {
     Matrix new_mtx(A.Rows(), B.Columns());
-    double alpha = 1;
-    double beta = 0;
-    double* c;
-    dim_t m, n, k;
-	inc_t rsa, csa;
-	inc_t rsb, csb;
-	inc_t rsc, csc;
-
-    m = 4; n = 5; k = 3;
 
     for (auto jj = 0u; jj < A.Rows(); jj += blockSize) {
         auto jjMin = std::min(jj + blockSize, A.Rows());
         for (auto kk = 0u; kk < A.Columns(); kk += blockSize) {
             auto kkMin = std::min(kk + blockSize, A.Columns());
             for (auto i = 0u; i < A.Rows(); i++) {
-                for (auto k = kk; k < kkMin; k++) {
-                    	// c := beta * c + alpha * a * b, where 'a', 'b', and 'c' are general.
-                        // bli_dgemm( BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE,
-                        //         m, n, k, &alpha, a, rsa, csa, b, rsb, csb,
-                        //                     &beta, c, rsc, csc );
-
-                    // for (auto j = jj; j < jjMin; j++) {
-                    //     new_mtx(i, j) += A(i, k) * B(k, j);
-                    // }
+                for (auto j = jj; j < jjMin; j++) {
+                    double acc = 0;
+                    for (auto k = kk; k < kkMin; k++) {
+                        acc += A(i, k) * B(k, j);
+                    }
+                    new_mtx(i, j) = acc;
                 }
             }
         }
