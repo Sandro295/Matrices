@@ -59,7 +59,7 @@ void fillMatrixRandomly(double* matrix, size_t rows, size_t columns) {
     }
 }
 
-Matrix multiplyBlocked(const Matrix& A, const Matrix& B, size_t blockSize) {
+Matrix multiplyBlocked(const Matrix& A, const Matrix& B, size_t blockSize = 16) {
     Matrix new_mtx(A.Rows(), B.Columns());
 
     for (auto jj = 0u; jj < A.Rows(); jj += blockSize) {
@@ -80,12 +80,10 @@ Matrix multiplyBlocked(const Matrix& A, const Matrix& B, size_t blockSize) {
     return new_mtx;
 }
 
-
-
-
 // indexing is (row, column)
 // u, v, w must have the same size
-Matrix multiplyDecomposed(const Matrix& a, const Matrix& b, const Matrix& u, const Matrix& v, const Matrix& w) {
+Matrix multiplyDecomposed(const Matrix& a, const Matrix& b,
+                          const Matrix& u, const Matrix& v, const Matrix& w) {
     Matrix c(a.Rows(), b.Columns());
     std::vector<int> m(u.Columns());
 

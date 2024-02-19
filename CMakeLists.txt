@@ -10,12 +10,15 @@ find_package(MKL CONFIG REQUIRED)
 
 set(MM_SOURCES_DIR src)
 file(GLOB_RECURSE MM_SOURCES CONFIGURE_DEPENDS "${MM_SOURCES_DIR}/*.h" "${MM_SOURCES_DIR}/*.cpp")
-# set(MM_SOURCES ${MM_SOURCES_DIR}/main.cpp
-#                ${MM_SOURCES_DIR}/matrix_util.cpp
-#                ${MM_SOURCES_DIR}/mkl_util.cpp
-#                ${MM_SOURCES_DIR}/aocl_util.cpp)
+list(FILTER MM_SOURCES EXCLUDE REGEX "(sgemm.cpp|gemm.cpp)")
+message("hey yo    "${MM_SOURCES})
+
+set(MMA_SOURCES ${MM_SOURCES_DIR}/gemm.cpp)
 
 add_executable(matrix ${MM_SOURCES})
+add_executable(gemm ${MMA_SOURCES})
+
+target_compile_options(gemm PUBLIC -O2 -march=native)
 # set(CMAKE_CXX_FLAGS -DMKL_ILP64  -m64  -I"${MKLROOT}/include")
 
 # add_library(amd-blis SHARED IMPORTED)

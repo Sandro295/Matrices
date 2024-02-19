@@ -58,20 +58,6 @@ static const Matrix w( \
 
 void benchMyMultiply(int times, int a_rows, int a_cols_b_rows, int b_cols) {
     Timer t(__FUNCTION__);
-    // std::vector<Matrix> A_matrices{times};
-    // std::vector<Matrix> B_matrices{times};
-    // std::vector<Matrix> C_matrices{times};
-    // for (auto &matrix : A_matrices) {
-    //     fillMatrixRandomly(matrix);
-    // }
-    // for (auto &matrix : B_matrices) {
-    //     fillMatrixRandomly(matrix);
-    // }
-
-    // Timer t(__FUNCTION__);
-    // for (auto i = 0; i < C_matrices.size(); ++i) {
-    //     C_matrices[i] = A_matrices[i] * B_matrices[i];
-    // }
 
     Matrix a(a_rows, a_cols_b_rows);
     Matrix b(a_cols_b_rows, b_cols);
@@ -79,7 +65,8 @@ void benchMyMultiply(int times, int a_rows, int a_cols_b_rows, int b_cols) {
     while(times--) {
         fillMatrixRandomly(a);
         fillMatrixRandomly(b);
-        regularMult = a * b;
+        regularMult = multiplyBlocked(a, b, 64);
+        // regularMult = a * b;
     }
 }
 
@@ -109,15 +96,36 @@ void benchAOCL(uint32_t times, int a_rows, int a_cols_b_rows, int b_cols) {
     }
 }
 
-
-int main() {
-    constexpr uint32_t timesToRepeat = 1'000;
-    constexpr int a_rows = 77;
-    constexpr int a_cols_b_rows = 55;
-    constexpr int b_rows = 99;
-    benchMKL(timesToRepeat, a_rows, a_cols_b_rows, b_rows);
-    benchAOCL(timesToRepeat, a_rows, a_cols_b_rows, b_rows);
-    benchMyMultiply(timesToRepeat, a_rows, a_cols_b_rows, b_rows);
+int main(int argc, char *argv[]) {
+    constexpr uint32_t timesToRepeat = 1;
+    constexpr int a_rows = 2;
+    constexpr int a_cols_b_rows = 2;
+    constexpr int b_cols = 2;
+    if (argc > 1) {
+        uint32_t bench_num = std::stoul(argv[1]);
+        switch (bench_num)
+        {
+        case 1:
+            benchMKL(timesToRepeat, a_rows, a_cols_b_rows, b_cols);
+            break;
+        case 2:
+            benchAOCL(timesToRepeat, a_rows, a_cols_b_rows, b_cols);
+            break;
+        case 3:
+            benchMyMultiply(timesToRepeat, a_rows, a_cols_b_rows, b_cols);
+            break;
+        case 4:
+            benchAlphaTensored(timesToRepeat);
+            break;
+        default:
+            std::cout << "too big of a number buddy\n";
+            break;
+        }
+        return 0;
+    }
+    benchMKL(timesToRepeat, a_rows, a_cols_b_rows, b_cols);
+    benchAOCL(timesToRepeat, a_rows, a_cols_b_rows, b_cols);
+    benchMyMultiply(timesToRepeat, a_rows, a_cols_b_rows, b_cols);
     benchAlphaTensored(timesToRepeat);
     return 0;
 }

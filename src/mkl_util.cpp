@@ -35,6 +35,22 @@ int IntelCBLASExample(int a_rows, int a_cols_b_rows, int b_cols) {
         return 1;
     }
 
+    // VSLStreamStatePtr stream;
+    // vslNewStream( &stream, BRNG,  SEED );       
+
+    // const int64_t size = 40000*40000;
+    // const int64_t block_size = 1000;
+
+    // double* matrix;
+    // matrix = (double*) malloc (size*sizeof(double));
+
+    // for(int64_t i = 0; i < size; i+=block_size) {
+    //         vdRngUniform( VSL_RNG_METHOD_UNIFORM_STD, stream, block_size, matrix + i, 0.0, 1.0 );
+    // }
+
+    // free(matrix);
+    // vslDeleteStream( &stream );
+
     fillMatrixRandomly(A, a_rows, a_cols_b_rows);
     fillMatrixRandomly(B, a_cols_b_rows, b_cols);
 
@@ -42,8 +58,11 @@ int IntelCBLASExample(int a_rows, int a_cols_b_rows, int b_cols) {
         C[i] = 0.0;
     }
 
+    Timer t(__FUNCTION__);
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
                 a_rows, b_cols, a_cols_b_rows, alpha, A, a_cols_b_rows, B, b_cols, beta, C, b_cols);
+    t.stop();
+    t.PrintTime();
 
 #ifdef DBG
     printf (" Top left corner of matrix A: \n");

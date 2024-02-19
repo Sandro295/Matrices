@@ -13,6 +13,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <experimental/simd>
+
 #include <array>
 
 // #define DEBUG
@@ -58,9 +60,9 @@ uint64_t nanos()
 float Bf[N * N] __attribute__((aligned(64)));
 __m256 *Bfm = (__m256 *)Bf;
 
-#define BLOCK 8
-#define BLOCK_Y 4
-#define BLOCK_X 2
+constexpr int BLOCK = 8;
+constexpr int BLOCK_Y = 4;
+constexpr int BLOCK_X = (BLOCK / BLOCK_Y);
 
 void matmul_naive()
 {
@@ -83,11 +85,12 @@ void matmulBlocks()
 {
     // dopest blocksize is 16 for my Ryzen 5600x
     // accumulator variable doesn't matter
-    static_assert(N % BLOCK == 0);
-    for (int jj = 0; jj < N; jj += BLOCK) {
-        int jjMin = std::min(jj + BLOCK, N);
-        for (int kk = 0; kk < N; kk += BLOCK) {
-            int kkMin = std::min(kk + BLOCK, N);
+    constexpr int blocksize = 16;
+    static_assert(N % blocksize == 0);
+    for (int jj = 0; jj < N; jj += blocksize) {
+        int jjMin = std::min(jj + blocksize, N);
+        for (int kk = 0; kk < N; kk += blocksize) {
+            int kkMin = std::min(kk + blocksize, N);
             for (int i = 0; i < N; i++) {
                 for (int j = jj; j < jjMin; j++) {
                     float temp = 0;
@@ -102,6 +105,53 @@ void matmulBlocks()
     }
 }
 
+
+namespace stdx = std::experimental;
+
+// SIMD vector of 64-bit unsigned integers
+using vuf = stdx::native_simd<float>;
+
+
+void matmulFMA() {
+
+    constexpr int blocksize = 4;
+    static_assert(N % blocksize == 0);
+    for (int jj = 0; jj < N; jj += blocksize) {
+        int jjMin = std::min(jj + blocksize, N);
+        for (int kk = 0; kk < N; kk += blocksize) {
+            int kkMin = std::min(kk + blocksize, N);
+            for (int i = 0; i < N; i++) {
+                for (int j = jj; j < jjMin; j++) {
+                    vuf temp = 0;
+                    for (int k = kk; k < kkMin; k++) {
+                        temp += A[i * N + k] * B[k * N + j];
+                        // C[i * N + j] += A[i * N + k] * B[k * N + j];
+                    }
+                    C[i * N + j] += stdx::reduce(temp);
+                }
+            }
+        }
+    }
+
+
+
+    // for (int y = 0; y < N; y += BLOCK) {
+    //     for (int x = 0; x < N; x += BLOCK) {
+    //         __m256 acc[BLOCK] = {};
+    //         for (int k = 0; k < N; k++) {
+    //             for (int iy = 0; iy < BLOCK; iy++) {
+    //                 __m256 ta = _mm256_broadcast_ss(&A[(y + iy) * N + k]);                    
+    //                 acc[iy] = _mm256_fmadd_ps(ta, Bfm[((x * N) + (k * 8)) / 8], acc[iy]);
+    //             }
+    //         }
+    //         for (int iy = 0; iy < BLOCK; iy++) {
+    //             Cm[((y + iy) * N + x ) / 8] = acc[iy];
+    //         }
+    //     }
+    // }
+}
+
+
 void matmul(int sy, int ey)
 {
     // 136.77 GFLOPS on single core numpy
@@ -112,28 +162,21 @@ void matmul(int sy, int ey)
 
     // Bf = (y/8, k, 8)
 #if 1
-    for (int y = sy; y < ey; y += BLOCK_Y)
-    {
-        for (int x = 0; x < N; x += BLOCK * BLOCK_X)
-        {
-            __m256 acc[BLOCK_Y][BLOCK_X] = {};
-            for (int k = 0; k < N; k++)
-            {
-                for (int iy = 0; iy < BLOCK_Y; iy++)
-                {
+    for (int y = sy; y < ey; y += BLOCK_Y) {
+        for (int x = 0; x < N; x += BLOCK * BLOCK_X) {
+            __m256 acc[BLOCK] = {};
+            for (int k = 0; k < N; k++) {
+                for (int iy = 0; iy < BLOCK_Y; iy++) {
                     __m256 ta = _mm256_broadcast_ss(&A[(y + iy) * N + k]);
-                    for (int ix = 0; ix < BLOCK_X; ix++)
-                    {
-                        acc[iy][ix] = _mm256_fmadd_ps(
-                            ta, Bfm[((x + ix * BLOCK) * N + k * 8) / 8], acc[iy][ix]);
+                    for (int ix = 0; ix < BLOCK_X; ix++) {
+                        acc[iy * BLOCK_Y + ix] = _mm256_fmadd_ps(
+                            ta, Bfm[((x + ix * BLOCK) * N + k * 8) / 8], acc[iy * BLOCK_Y + ix]);
                     }
                 }
             }
-            for (int iy = 0; iy < BLOCK_Y; iy++)
-            {
-                for (int ix = 0; ix < BLOCK_X; ix++)
-                {
-                    Cm[((y + iy) * N + x + ix * BLOCK) / 8] = acc[iy][ix];
+            for (int iy = 0; iy < BLOCK_Y; iy++) {
+                for (int ix = 0; ix < BLOCK_X; ix++) {
+                    Cm[((y + iy) * N + x + ix * BLOCK) / 8] = acc[iy * BLOCK_Y + ix];
                 }
             }
         }
@@ -167,9 +210,10 @@ int main()
     {
         memset(C, 0, N * N * sizeof(float));
         auto start = std::chrono::high_resolution_clock::now();
-        matmul(0, N);
+        // matmul(0, N);
         // matmul_naive();
-        // matmulBlocks();
+        matmulBlocks();
+        // matmulFMA();
         auto end = std::chrono::high_resolution_clock::now();
 
         double gflop = (2.0 * N * N * N) * 1e-9;

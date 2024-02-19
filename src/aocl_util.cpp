@@ -2,6 +2,10 @@
 
 #include "blis.h"
 
+#include "Timer.h"
+
+// #define DBG
+
 int AmdBLISExample(int a_rows, int a_cols_b_rows, int b_cols) {
 	num_t dt;
 	dim_t m, n, k;
@@ -32,15 +36,17 @@ int AmdBLISExample(int a_rows, int a_cols_b_rows, int b_cols) {
 	bli_setm( &BLIS_ZERO, &c );
 
 #ifdef DBG
-	bli_printm( "a: randomized", &a, "%4.1f", "" );
-	bli_printm( "b: set to 1.0", &b, "%4.1f", "" );
-	bli_printm( "c: initial value", &c, "%4.1f", "" );
+	bli_printm( strdup("a: randomized"), &a, strdup("%4.1f"), strdup("") );
+	bli_printm( strdup("b: set to 1.0"), &b, strdup("%4.1f"), strdup("") );
+	bli_printm( strdup("c: initial value"), &c, strdup("%4.1f"), strdup("") );
 #endif
+	Timer t(__FUNCTION__);
 	// c := beta * c + alpha * a * b, where 'a', 'b', and 'c' are general.
 	bli_gemm( alpha, &a, &b, beta, &c );
-
+	t.stop();
+	t.PrintTime();
 #ifdef DBG
-	bli_printm( "c: after gemm", &c, "%4.1f", "" );
+	bli_printm( strdup("c: after gemm"), &c, strdup("%4.1f"), strdup("") );
 #endif
 	// Free the objects.
 	bli_obj_free( &a );
